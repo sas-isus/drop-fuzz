@@ -4,7 +4,7 @@
 drop-fuzz.py: Generates a report containing the results of running a fuzzer
               on a specified Drupal module.
 Usage:
-        $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a apikey -u brian -p password123
+    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a apikey -u brian -p password123
 """
 
 __author__    = "Brian Jopling"
@@ -60,7 +60,8 @@ if not target:
         target = 'http://127.0.0.1/drupal/'
 
 # Ensure apikey has been set properly.
-# Get an API key by opening ZAP, going to Tools -> Options, selecting "API", and copying the key on the right.
+# Get an API key by opening ZAP, going to Tools -> Options, selecting "API",
+# and copying the key on the right.
 apikey = options.apikey
 if not apikey:
     apikey = raw_input("Enter your ZAP API Key (Tools -> Options, select 'API'): ")
@@ -104,11 +105,14 @@ authmethodname = 'formBasedAuthentication'
 # set uses the respective encodings of those special characters. This is how
 # ZAP is able to distinguish the inner from the outer.
 authmethodconfigparams = 'loginUrl=' + target + 'user/login/' + \
-                         '&loginRequestData=name%3D{%25username%25}%26pass%3D{%25password%25}%26form_id%3Duser_login_form%26op%3DLog%2Bin'
+                         '&loginRequestData=name%3D{%25username%25}' + \
+                         '%26pass%3D{%25password%25}' + \
+                         '%26form_id%3Duser_login_form%26op%3DLog%2Bin'
 # By default ZAP API client will connect to port 8080
 zap = ZAPv2(apikey=apikey)
 # If listening on port 8090, use:
-# zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8090', 'https': 'http://127.0.0.1:8090'})
+# zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8090',
+# 'https': 'http://127.0.0.1:8090'})
 # Should we ask the user for the port? Or just assume 8080? Maybe add an arg for it.
 
 
@@ -116,30 +120,58 @@ zap = ZAPv2(apikey=apikey)
 
 
 def setup_zap():
+    """Create a Context with our target and user info in ZAP."""
     global contextid, userid
+    # Create a Context in ZAP to store our work in.
     contextid = zap.context.new_context(context)
-
+    # Initialize the Context by adding our target to it.
     init_zap_context()
+    # Add our Authentication info to the Context.
     init_zap_authentication()
-
+    # Create a User to select from in ZAP.
     userid = zap.users.new_user(contextid, 'user1')
-
+    # Initialize User with our custom username and password.
     init_zap_user()
 
 
 def init_zap_context():
-    print 'Including target in context...' + zap.context.include_in_context(context, target + '.*')
-    print 'Checking context...' + str(zap.context.context(context)) + ' OK'
+    """Create new Context in ZAP."""
+    # Add Target site to our Context.
+    print 'Including target in context...' + \
+          zap.context.include_in_context(context, target + '.*')
+    # Print out Context to console so user can see that it actually exists.
+    # Maybe make this verbose-only?
+    print 'Checking context...' + \
+          str(zap.context.context(context)) + ' OK'
 
 
 def init_zap_authentication():
-    print 'Setting authentication method...' + zap.authentication.set_authentication_method(contextid, authmethodname, authmethodconfigparams)
-    print 'Setting logged in indicator...' + zap.authentication.set_logged_in_indicator(contextid, '\Q<a href="/drupal/user/logout" data-drupal-link-system-path="user/logout">Log out</a>\E')
+    """Add Authentication method info to our Context."""
+    # Set auth method in Context with associated POST data.
+    print 'Setting authentication method...' + \
+          zap.authentication.set_authentication_method(
+              contextid, authmethodname, authmethodconfigparams
+          )
+    # Set the logged in indicator so ZAP knows if user is logged in or not.
+    print 'Setting logged in indicator...' + \
+          zap.authentication.set_logged_in_indicator(
+              contextid, '\Q<a href="/drupal/user/logout" ' + \
+              'data-drupal-link-system-path="user/logout">Log out</a>\E'
+          )
 
 
 def init_zap_user():
-    print 'Setting authentication credentials...' + zap.users.set_authentication_credentials(contextid, userid, 'username=%s&password=%s' % (login_name, login_pass))
-    print 'Enabling user for current session...' + zap.users.set_user_enabled(contextid, userid, True)
+    """Add custom credentials to ZAP User and enable it."""
+    # Adds custom username and password to ZAP User in our Context.
+    print 'Setting authentication credentials...' + \
+          zap.users.set_authentication_credentials(
+              contextid,
+              userid,
+              'username=%s&password=%s' % (login_name, login_pass)
+          )
+    # Enables the User for our current Context.
+    print 'Enabling user for current session...' + \
+          zap.users.set_user_enabled(contextid, userid, True)
 
 
 def exit_program(reason):
@@ -157,11 +189,14 @@ def link_zap_to_target():
 
 
 def spider_target():
+    """Spiders Target as User in ZAP."""
+    # Alert user.
     print 'Spidering target %s' % target
-    # scanid = zap.spider.scan(target)
+    # Start scanning in ZAP.
     scanid = zap.spider.scan_as_user(contextid, userid, target)
-    # Give the Spider a chance to start
+    # Give the Spider a chance to start.
     time.sleep(2)
+    # Print out progress of Spider until it's at 100%.
     while (int(zap.spider.status(scanid)) < 100):
         print 'Spider progress %: ' + zap.spider.status(scanid)
         time.sleep(2)
@@ -188,7 +223,7 @@ def export_results():
 
 def main():
     setup_zap()
-    #link_zap_to_target() # probably dont need this anymore...
+    #link_zap_to_target() # probably don't need this anymore...
     spider_target()
     #active_scan_target()
     #export_results()
