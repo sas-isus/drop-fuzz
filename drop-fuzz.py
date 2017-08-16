@@ -50,62 +50,18 @@ parser.add_option("-u", "--username", "--user", dest="login_name", \
                   help="Drupal login username", metavar='<USERNAME>')
 parser.add_option("-p", "--password", "--pass", dest="login_pass", \
                   help="Drupal login password", metavar='<PASSWORD>')
-parser.add_option("-A", "--active", action="store_true", dest="active", \
-                  help="Perform an Active Scan")
+parser.add_option("-S", "--spider", action="store_true", dest="spider", \
+                  help="Run a spider on the module's routes")
 parser.add_option("-f", "--force", action="store_true", dest="force", \
                   help="Force default values for prompts")
 (options, args) = parser.parse_args()
 
-
-# Ensure target has been set properly.
-target = options.target
-if not target:
-    if not options.force:
-        ans = raw_input("Use http://127.0.0.1/drupal as target? [Y|N]: ")
-        if ans.lower() == 'n' or ans.lower() == 'no':
-            target = raw_input("Enter a URL to target: ")
-        else:
-            target = 'http://127.0.0.1/drupal'
-    else:
-        target = 'http://127.0.0.1/drupal'
-
-# Ensure apikey has been set properly.
-# Get an API key by opening ZAP, going to Tools -> Options, selecting "API",
-# and copying the key on the right.
-apikey = options.apikey
-if not apikey:
-    apikey = raw_input("Enter your ZAP API Key (Tools -> Options, select 'API'): ")
-
-# Ensure login_name has been set properly.
+# Global variables used throughout this program.
+target     = options.target
+apikey     = options.apikey
 login_name = options.login_name
-if not login_name:
-    if not options.force:
-        ans = raw_input("Use admin as username? [Y|N]: ")
-        if ans.lower() == 'n' or ans.lower() == 'no':
-            login_name = raw_input("Enter your Drupal username: ")
-        else:
-            login_name = 'admin'
-    else:
-        login_name = 'admin'
-
-# Ensure login_password has been set properly.
 login_pass = options.login_pass
-if not login_pass:
-    if not options.force:
-        ans = raw_input("Use admin as password? [Y|N]: ")
-        if ans.lower() == 'n' or ans.lower() == 'no':
-            login_pass = raw_input("Enter your Drupal password: ")
-        else:
-            login_pass = 'admin'
-    else:
-        login_pass = 'admin'
-
-# Ensure module has been set properly.
-module = options.module
-if not module:
-    readline.set_completer_delims(' \t\n')
-    readline.parse_and_bind("tab: complete")
-    module = raw_input("Enter module path (ex /home/brj424/metatag): ")
+module     = options.module
 
 # Array containing routing paths for selected module.
 module_routes = []
@@ -120,17 +76,10 @@ contextid      = ''
 userid         = ''
 authmethodname = 'formBasedAuthentication'
 
-# The below looks a bit confusing. That's because this string is a set of
-# queries containing queries. The outer set uses &, =, etc, while the inner
-# set uses the respective encodings of those special characters. This is how
-# ZAP is able to distinguish the inner from the outer.
-authmethodconfigparams = 'loginUrl=' + target + '/user/login/' + \
-                         '&loginRequestData=name%3D{%25username%25}' + \
-                         '%26pass%3D{%25password%25}' + \
-                         '%26form_id%3Duser_login_form%26op%3DLog%2Bin'
+authmethodconfigparams = ''
 
-# By default ZAP API client will connect to port 8080
-zap = ZAPv2(apikey=apikey)
+# By default ZAP API client will connect to port 8080, once it's initialized.
+zap = ''
 # If listening on port 8090, use:
 # zap = ZAPv2(apikey=apikey, proxies={'http': 'http://127.0.0.1:8090',
 # 'https': 'http://127.0.0.1:8090'})
@@ -195,14 +144,69 @@ ________ __________ ________ __________                 .+++-`
 def attempt_banner_display():
     """If the console size is large enough, display our banner."""
     rows, columns = os.popen('stty size', 'r').read().split()
-    print columns
     if int(columns) > 112:
         display_large_banner()
     elif int(columns) > 75:
         display_small_banner()
 
 
+def prompt_inputs():
+    """Prompts user for input if any info is missing."""
+    global target, apikey, login_name, login_pass, \
+           module, authmethodconfigparams, zap
+    # Ensure target has been set properly.
+    if not target:
+        if not options.force:
+            ans = raw_input("Use http://127.0.0.1/drupal as target? [Y|N]: ")
+            if ans.lower() == 'n' or ans.lower() == 'no':
+                target = raw_input("Enter a URL to target: ")
+            else:
+                target = 'http://127.0.0.1/drupal'
+        else:
+            target = 'http://127.0.0.1/drupal'
+    # Ensure apikey has been set properly.
+    if not apikey:
+        apikey = raw_input("Enter your ZAP API Key (Tools -> Options, select 'API'): ")
+    # Ensure login_name has been set properly.
+    if not login_name:
+        if not options.force:
+            ans = raw_input("Use admin as username? [Y|N]: ")
+            if ans.lower() == 'n' or ans.lower() == 'no':
+                login_name = raw_input("Enter your Drupal username: ")
+            else:
+                login_name = 'admin'
+        else:
+            login_name = 'admin'
+    # Ensure login_pass has been set properly.
+    if not login_pass:
+        if not options.force:
+            ans = raw_input("Use admin as password? [Y|N]: ")
+            if ans.lower() == 'n' or ans.lower() == 'no':
+                login_pass = raw_input("Enter your Drupal password: ")
+            else:
+                login_pass = 'admin'
+        else:
+            login_pass = 'admin'
+    # Ensure module has been set properly.
+    if not module:
+        readline.set_completer_delims(' \t\n')
+        readline.parse_and_bind("tab: complete")
+        module = raw_input("Enter module path (ex /home/brj424/metatag): ")
+    # Set authmethodconfigparams using new data.
+    # The below looks a bit confusing. That's because this string is a set of
+    # queries containing queries. The outer set uses &, =, etc, while the inner
+    # set uses the respective encodings of those special characters. This is how
+    # ZAP is able to distinguish the inner from the outer.
+    authmethodconfigparams = 'loginUrl=' + target + '/user/login/' + \
+                             '&loginRequestData=name%3D{%25username%25}' + \
+                             '%26pass%3D{%25password%25}' + \
+                             '%26form_id%3Duser_login_form%26op%3DLog%2Bin'
+    # Set zap using new data.
+    zap = ZAPv2(apikey=apikey)
+
+
 def get_routing_paths():
+    """Reads module's routing.yml file to find paths worth analyzing."""
     global module_routes
     routing_file = ''
     # Check every file in the specified directory.
@@ -353,6 +357,7 @@ def active_scan_target():
 
 def export_results():
     # Report the results
+    # Todo: Complete this function.
     print 'Hosts: ' + ', '.join(zap.core.hosts)
     print 'Alerts: '
     pprint (zap.core.alerts())
@@ -360,11 +365,12 @@ def export_results():
 
 def main():
     attempt_banner_display()
+    prompt_inputs()
     get_routing_paths()
     setup_zap()
-    spider_target()
-    if options.active:
-        active_scan_target()
+    if options.spider:
+        spider_target()
+    active_scan_target()
     #export_results()
     print 'Done.'
 
