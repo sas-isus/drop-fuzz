@@ -50,6 +50,8 @@ parser.add_option("-u", "--username", "--user", dest="login_name", \
                   help="Drupal login username", metavar='<USERNAME>')
 parser.add_option("-p", "--password", "--pass", dest="login_pass", \
                   help="Drupal login password", metavar='<PASSWORD>')
+parser.add_option("-A", "--active", action="store_true", dest="active", \
+                  help="Perform an Active Scan")
 parser.add_option("-f", "--force", action="store_true", dest="force", \
                   help="Force default values for prompts")
 (options, args) = parser.parse_args()
@@ -59,13 +61,13 @@ parser.add_option("-f", "--force", action="store_true", dest="force", \
 target = options.target
 if not target:
     if not options.force:
-        ans = raw_input("Use http://127.0.0.1/drupal/ as target? [Y|N]: ")
+        ans = raw_input("Use http://127.0.0.1/drupal as target? [Y|N]: ")
         if ans.lower() == 'n' or ans.lower() == 'no':
             target = raw_input("Enter a URL to target: ")
         else:
-            target = 'http://127.0.0.1/drupal/'
+            target = 'http://127.0.0.1/drupal'
     else:
-        target = 'http://127.0.0.1/drupal/'
+        target = 'http://127.0.0.1/drupal'
 
 # Ensure apikey has been set properly.
 # Get an API key by opening ZAP, going to Tools -> Options, selecting "API",
@@ -269,16 +271,10 @@ def exit_program(reason):
     exit()
 
 
-def link_zap_to_target():
-    print 'Accessing target %s' % target
-    # Start a unique session...
-    zap.urlopen(target)
-    # Give the sites tree a chance to get updated
-    time.sleep(2)
-
-
 def spider_target():
     """Spiders Target as User in ZAP."""
+    # Alert user.
+    print '\nStarting Spider...\n'
     # Spider each route.
     for route in module_routes:
         # Alert user.
@@ -306,12 +302,24 @@ def spider_target():
 
 
 def active_scan_target():
-    print 'Scanning target %s' % target
-    scanid = zap.ascan.scan(target)
-    while (int(zap.ascan.status(scanid)) < 100):
-        print 'Scan progress %: ' + zap.ascan.status(scanid)
-        time.sleep(5)
-    print 'Scan completed'
+    """Performs Active Scan on Target in ZAP."""
+    # Alert user.
+    print '\nStarting Active Scanner...\n'
+    # Scan each route.
+    for route in module_routes:
+        # Alert user.
+        print 'Scanning target %s' % target + route
+        # Start scanning in ZAP.
+        # Params. (url, contextId, userId, recurse, scanPolicyName, method, postData)
+        scanid = zap.ascan.scan_as_user(target + route, contextid, userid, True)
+        # Print out progress of Scan until it's at 100%.
+        while (int(zap.ascan.status(scanid)) < 100):
+            print 'Scan progress %: ' + zap.ascan.status(scanid)
+            time.sleep(5)
+        print 'Scan completed for route ' + route + '...OK'
+        # Give scanner a chance to finish.
+        time.sleep(2)
+    print 'Scan completed for all routes...OK'
 
 
 def export_results():
@@ -325,9 +333,9 @@ def main():
     attempt_banner_display()
     get_routing_paths()
     setup_zap()
-    #link_zap_to_target() # probably don't need this anymore...
     spider_target()
-    #active_scan_target()
+    if options.active:
+        active_scan_target()
     #export_results()
     print 'Done.'
 
