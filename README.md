@@ -5,23 +5,28 @@ An automated fuzzer designed for use with Drupal sites.
 
 ## Usage
 
-    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
+    $ python drop-fuzz.py -A -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
 
 **Arguments:**
 
-    -h, --help                                             Show a help message and exit.
+    -h, --help                                                   Show a help message and exit.
 
-    -t TARGET_SITE, --target TARGET_SITE                   Target site containing Drupal module
+    -t TARGET_SITE, --target TARGET_SITE                         Target site containing Drupal module.
 
-    -a API_KEY, -k API_KEY, --api API_KEY, --key API_KEY   API Key obtained through ZAP.
+    -a API_KEY, -k API_KEY, --api API_KEY, --key API_KEY         API Key obtained through ZAP.
 
-    -u USER, --username USER, --user USER                  Drupal login username.
+    -m MODULE_PATH, --module MODULE_PATH, --path MODULE_PATH     Path to module.
 
-    -p PASSWORD, --password PASSWORD, --pass PASSWORD      Drupal login password.
+    -u USER, --username USER, --user USER                        Drupal login username.
 
-    -f, --force                                            Force default values for prompts.
+    -p PASSWORD, --password PASSWORD, --pass PASSWORD            Drupal login password.
 
-Arguments are not required, as _drop-fuzz_ will prompt the user for any missing info.
+    -A, --active                                                 Perform an Active Scan.
+
+    -f, --force                                                  Force default values for prompts.
+
+Arguments are not required, as _drop-fuzz_ will prompt the user for any missing
+info, aside from -A (Active Scanning) and -f (forcing the default values).
 
 
 ## Examples
@@ -33,7 +38,7 @@ By default, _drop-fuzz_ will prompt the user for any information it needs.
 If you want _drop-fuzz_ to run without user input, you can specify what's
 necessary via arguments.
 
-    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
+    $ python drop-fuzz.py -A -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
 
     $ python drop-fuzz.py -f
 
