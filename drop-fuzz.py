@@ -170,21 +170,13 @@ def prompt_inputs():
     # Ensure login_name has been set properly.
     if not login_name:
         if not options.force:
-            ans = raw_input("Use admin as username? [Y|N]: ")
-            if ans.lower() == 'n' or ans.lower() == 'no':
-                login_name = raw_input("Enter your Drupal username: ")
-            else:
-                login_name = 'admin'
+            login_name = raw_input("Enter your Drupal username: ")
         else:
             login_name = 'admin'
     # Ensure login_pass has been set properly.
     if not login_pass:
         if not options.force:
-            ans = raw_input("Use admin as password? [Y|N]: ")
-            if ans.lower() == 'n' or ans.lower() == 'no':
-                login_pass = raw_input("Enter your Drupal password: ")
-            else:
-                login_pass = 'admin'
+            login_pass = raw_input("Enter your Drupal password: ")
         else:
             login_pass = 'admin'
     # Ensure module has been set properly.
