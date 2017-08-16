@@ -140,7 +140,7 @@ zap = ZAPv2(apikey=apikey)
 """ FUNCTIONS """
 
 
-def display_banner():
+def display_large_banner():
     """Prints banner to console."""
     banner = """
 
@@ -166,11 +166,40 @@ ________ __________ ________ __________    -++++++++++++++++++++++++-    _______
     print banner
 
 
+def display_small_banner():
+    """Prints banner to console."""
+    banner = """
+
+                                                         .:`
+________ __________ ________ __________                 .+++-`
+\\______ \\\\______   \\\\_____  \\\\______  \\\\             .:+++++++/:.`
+ |    |  \\|       _/ /   |   \\|     ___/         `-/++++++++++++++/-`
+ |    `   \    |   \\/    |    \\    |           `:++++++++++++++++++++:`
+/_______  /____|_  /\\_______  /____|          -++++++++++++++++++++++++-
+        \\/       \\/         \\/               :++++++++++++++++++++++++++:
+                                             .++++++++++++++++++++++++++++.
+ _______________ _______________________    /++++++++++++++++++++++++++++/
+\\_   _____/    |   \\____    /\\____    /     ++++++++++////++++++++++++++++
+ |    __) |    |   / /     /   /     /      +++++++/.      `-/+++++/-`  -+
+ |     \\  |    |  / /     /_  /     /_      -+++++/           `-:-`     `:
+ \\___  /  |______/ /_______ \\/_______ \\      /++++:          `-:/:`     .`
+     \\/                    \\/        \\/       :++++-     `.:/:---:+/.  .`
+                                               ./+++++//++++//+++/++++-
+                                                .:++++++/.-::::-::/-`
+                                                    .-:/++++//::-.`
+
+     """
+    print banner
+
+
 def attempt_banner_display():
     """If the console size is large enough, display our banner."""
     rows, columns = os.popen('stty size', 'r').read().split()
+    print columns
     if int(columns) > 112:
-        display_banner()
+        display_large_banner()
+    elif int(columns) > 75:
+        display_small_banner()
 
 
 def get_routing_paths():
