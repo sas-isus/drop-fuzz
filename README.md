@@ -44,6 +44,13 @@ Though, you can always specify this information to _drop-fuzz_ via arguments.
     $ python drop-fuzz.py -f
 
 
+## Using `config.yml`
+
+If you don't want to enter your ZAP API key, Drupal username, and Drupal
+password every time you run this program, modify `config.yml` to support your
+needs.
+
+
 ## Obtaining a ZAP API Key
 
 Get an API key by opening ZAP, going to Tools -> Options, selecting "API",
@@ -73,7 +80,7 @@ $ pip install -r requirements.txt
 - [ ] Custom Active Scan policies.
     - This means you'll be able to select the payloads used when fuzzing.
     - This also means you'll be able to select what else to scan for (not just fuzzing).
-- [ ] Configuration file.
+- [x] Configuration file.
     - No more having to type all the same arguments every single time you run this.
 - [ ] Exported results file and auto-closing of ZAP.
     - Why leave ZAP open for hours once it's done scanning?
