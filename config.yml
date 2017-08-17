@@ -1,0 +1,9 @@
+# drop-fuzz -- config.yml
+# =========================
+# To use, uncomment the below line(s) you find necessary, and replace
+# the given values with your own.
+#--------------------------------------------------------------------
+
+#drupal-username: brian
+#drupal-password: paranoid4ndr0id
+#zap-apikey: abcdefghijk1234567
