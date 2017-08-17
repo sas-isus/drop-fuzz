@@ -82,7 +82,7 @@ $ pip install -r requirements.txt
     - This also means you'll be able to select what else to scan for (not just fuzzing).
 - [x] Configuration file.
     - No more having to type all the same arguments every single time you run this.
-- [ ] Exported results file and auto-closing of ZAP.
+- [x] Exported results file and auto-closing of ZAP.
     - Why leave ZAP open for hours once it's done scanning?
     - Upon completion, save a full-blown report and close ZAP (maybe save the session, too, just in case).
 - [x] Automatically find the module's source code so you don't have to type in a local path every time.
