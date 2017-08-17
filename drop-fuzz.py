@@ -432,7 +432,7 @@ def active_scan_target():
     # Scan each route.
     for route in module_routes:
         # Alert user.
-        print 'Scanning target %s' % target + route
+        print '\nScanning target %s' % target + route
         # Start scanning in ZAP.
         # Params. (url, contextId, userId, recurse, scanPolicyName, method, postData)
         scanid = zap.ascan.scan_as_user(target + route, contextid, userid, True, scan_policy, apikey=apikey)
@@ -441,16 +441,17 @@ def active_scan_target():
         # I think the issue is caused by a lack of Spidering prior to scanning.
         # It may be beneficial to wrap this in a try-except, and if it fails,
         # then run the program again but with the -S flag.
+        # Edit: Fixed by calling Spider in the event of an error. :)
 
         # Print out progress of Scan until it's at 100%.
         try:
             while (int(zap.ascan.status(scanid)) < 100):
-                print 'Scan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
+                print '\tScan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
                 time.sleep(5)
         except ValueError as e:
             print 'ZAP needs to spider the site before running an Active Scan.'
             spider_target()
-            return active_scan_target() 
+            return active_scan_target()
         print 'Scan completed for route ' + route + Fore.GREEN + '...OK'
         # Give scanner a chance to finish.
         time.sleep(2)
@@ -460,9 +461,17 @@ def active_scan_target():
 def export_results():
     # Report the results
     # Todo: Complete this function.
+    module_name = module.rsplit('/', 1)[1]
+    file_name = '%s-%s-%s' % (module_name, current_date, current_time)
+    f = open(file_name + ".html", "w")
+    f.write(zap.core.htmlreport())
+    f.close()
+    print Fore.GREEN + Style.BRIGHT + 'File saved as %s.html' % file_name
+    '''
     print 'Hosts: ' + ', '.join(zap.core.hosts)
     print 'Alerts: '
     pprint (zap.core.alerts())
+    '''
 
 
 def main():
@@ -474,7 +483,7 @@ def main():
     if options.spider:
         spider_target()
     active_scan_target()
-    #export_results()
+    export_results()
     print Fore.GREEN + Style.BRIGHT + 'Done.'
 
 
