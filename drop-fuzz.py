@@ -33,6 +33,8 @@ import os
 import yaml
 # Used for user-input tab completion.
 import readline
+# Used for colored output.
+from colorama import Fore, Style, init
 
 
 """ GLOBALS """
@@ -63,8 +65,14 @@ login_name = options.login_name
 login_pass = options.login_pass
 module     = options.module
 
+# If user is hosting site on local machine, we can check for module via /var/www/
+is_local_host = False
+
 # Array containing routing paths for selected module.
 module_routes = []
+
+# Initialize Colorama for coloring terminal text.
+init(autoreset=True)
 
 # Get current time and date for unique naming.
 current_date = time.strftime("%y%m%d")
@@ -91,7 +99,7 @@ zap = ''
 
 def display_large_banner():
     """Prints banner to console."""
-    banner = """
+    banner = Fore.CYAN + """
 
                                                       .:`
                                                      .+++-`
@@ -117,7 +125,7 @@ ________ __________ ________ __________    -++++++++++++++++++++++++-    _______
 
 def display_small_banner():
     """Prints banner to console."""
-    banner = """
+    banner = Fore.CYAN + """
 
                                                          .:`
 ________ __________ ________ __________                 .+++-`
@@ -157,16 +165,19 @@ def prompt_inputs():
     # Ensure target has been set properly.
     if not target:
         if not options.force:
-            ans = raw_input("Use http://127.0.0.1/drupal as target? [Y|N]: ")
+            ans = raw_input("Use http://127.0.0.1/drupal as target?" + Fore.YELLOW + " [Y|N]: ")
             if ans.lower() == 'n' or ans.lower() == 'no':
                 target = raw_input("Enter a URL to target: ")
             else:
                 target = 'http://127.0.0.1/drupal'
         else:
             target = 'http://127.0.0.1/drupal'
+    # Ensure target has protocol. (Otherwise, ZAP gets confused.)
+    if not target.startswith("http://") and not target.startswith("https://"):
+        target = "http://" + target
     # Ensure apikey has been set properly.
     if not apikey:
-        apikey = raw_input("Enter your ZAP API Key (Tools -> Options, select 'API'): ")
+        apikey = raw_input("Enter your ZAP API Key " + Fore.YELLOW + "(Tools -> Options, select 'API'): ")
     # Ensure login_name has been set properly.
     if not login_name:
         if not options.force:
@@ -181,9 +192,22 @@ def prompt_inputs():
             login_pass = 'admin'
     # Ensure module has been set properly.
     if not module:
-        readline.set_completer_delims(' \t\n')
-        readline.parse_and_bind("tab: complete")
-        module = raw_input("Enter module path (ex /home/brj424/metatag): ")
+        if target.startswith("http://127.0.0.1"):
+            local_contrib_dir = "/var/www/html/" + target.replace("http://127.0.0.1/", "") + "/modules/contrib/"
+            if os.path.isdir(local_contrib_dir):
+                print 'Possible Modules:'
+                for m in os.listdir(local_contrib_dir):
+                    print Fore.YELLOW + m
+                print ''
+                sel_module = raw_input("Select a module: ")
+                if sel_module not in os.listdir(local_contrib_dir):
+                    print Fore.RED + 'Invalid module. Try again.\n'
+                    return prompt_inputs()
+                module = local_contrib_dir + sel_module
+        else:
+            readline.set_completer_delims(' \t\n')
+            readline.parse_and_bind("tab: complete")
+            module = raw_input("Enter module path (ex /home/brj424/metatag): ")
     # Set authmethodconfigparams using new data.
     # The below looks a bit confusing. That's because this string is a set of
     # queries containing queries. The outer set uses &, =, etc, while the inner
@@ -194,7 +218,10 @@ def prompt_inputs():
                              '%26pass%3D{%25password%25}' + \
                              '%26form_id%3Duser_login_form%26op%3DLog%2Bin'
     # Set zap using new data.
-    zap = ZAPv2(apikey=apikey)
+    try:
+        zap = ZAPv2(apikey=apikey)
+    except e:
+        exit_program("Could not start ZAP. Is ZAP open? Is the API valid?")
 
 
 def get_routing_paths():
@@ -206,7 +233,7 @@ def get_routing_paths():
     for f in os.listdir(module):
         if f.endswith(".routing.yml"):
             print "Routing file found at " + os.path.join(module, f) + \
-                  "...OK"
+                  Fore.GREEN + "...OK"
             routing_file = f
     # If a routing file is found, then add all the routes to our list.
     if routing_file:
@@ -236,7 +263,7 @@ def get_routing_paths():
     # Still, do a manual pen-test to make sure.
     else:
         exit_program("[!] Module does not have a routing file.")
-    print 'Found the following routes: ' + str(module_routes) + '...OK'
+    print 'Found the following routes: ' + str(module_routes) + Fore.GREEN + '...OK'
 
 
 def setup_zap():
@@ -249,7 +276,7 @@ def setup_zap():
     # Add our Authentication info to the Context.
     init_zap_authentication()
     # Create a User to select from in ZAP.
-    userid = zap.users.new_user(contextid, 'user1')
+    userid = zap.users.new_user(contextid, 'dropfuzz-user')
     # Initialize User with our custom username and password.
     init_zap_user()
 
@@ -257,19 +284,19 @@ def setup_zap():
 def init_zap_context():
     """Create new Context in ZAP."""
     # Add Target site to our Context.
-    print 'Including target in context...' + \
+    print 'Including target in context' + Fore.GREEN + '...' + \
           zap.context.include_in_context(context, target + '.*')
 
 
 def init_zap_authentication():
     """Add Authentication method info to our Context."""
     # Set auth method in Context with associated POST data.
-    print 'Setting authentication method...' + \
+    print 'Setting authentication method' + Fore.GREEN + '...' + \
           zap.authentication.set_authentication_method(
               contextid, authmethodname, authmethodconfigparams
           )
     # Set the logged in indicator so ZAP knows if user is logged in or not.
-    print 'Setting logged in indicator...' + \
+    print 'Setting logged in indicator' + Fore.GREEN + '...' + \
           zap.authentication.set_logged_in_indicator(
               contextid, '\Q<a href="/drupal/user/logout" ' + \
               'data-drupal-link-system-path="user/logout">Log out</a>\E'
@@ -279,14 +306,14 @@ def init_zap_authentication():
 def init_zap_user():
     """Add custom credentials to ZAP User and enable it."""
     # Adds custom username and password to ZAP User in our Context.
-    print 'Setting authentication credentials...' + \
+    print 'Setting authentication credentials' + Fore.GREEN + '...' + \
           zap.users.set_authentication_credentials(
               contextid,
               userid,
               'username=%s&password=%s' % (login_name, login_pass)
           )
     # Enables the User for our current Context.
-    print 'Enabling user for current session...' + \
+    print 'Enabling user for current session' + Fore.GREEN + '...' + \
           zap.users.set_user_enabled(contextid, userid, True)
 
 
@@ -318,12 +345,12 @@ def spider_target():
         time.sleep(2)
         # Print out progress of Spider until it's at 100%.
         while (int(zap.spider.status(scanid)) < 100):
-            print '\tSpider progress %: ' + zap.spider.status(scanid)
+            print '\tSpider progress %: ' + Fore.GREEN + zap.spider.status(scanid)
             time.sleep(2)
-        print 'Spider completed for route ' + route + '...OK'
+        print 'Spider completed for route ' + route + Fore.GREEN + '...OK'
         # Give the passive scanner a chance to finish
         time.sleep(5)
-    print 'Spider completed for all routes...OK'
+    print Fore.GREEN + Style.BRIGHT + 'Spider completed for all routes...OK'
 
 
 def active_scan_target():
@@ -339,12 +366,12 @@ def active_scan_target():
         scanid = zap.ascan.scan_as_user(target + route, contextid, userid, True)
         # Print out progress of Scan until it's at 100%.
         while (int(zap.ascan.status(scanid)) < 100):
-            print 'Scan progress %: ' + zap.ascan.status(scanid)
+            print 'Scan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
             time.sleep(5)
-        print 'Scan completed for route ' + route + '...OK'
+        print 'Scan completed for route ' + route + Fore.GREEN + '...OK'
         # Give scanner a chance to finish.
         time.sleep(2)
-    print 'Scan completed for all routes...OK'
+    print Fore.GREEN + Style.BRIGHT + 'Scan completed for all routes...OK'
 
 
 def export_results():
@@ -364,7 +391,7 @@ def main():
         spider_target()
     active_scan_target()
     #export_results()
-    print 'Done.'
+    print Fore.GREEN + Style.BRIGHT + 'Done.'
 
 
 """ PROCESS """
