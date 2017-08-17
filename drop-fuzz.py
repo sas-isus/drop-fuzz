@@ -158,6 +158,40 @@ def attempt_banner_display():
         display_small_banner()
 
 
+def read_config():
+    """Tries to read from config.yml"""
+    global login_name, login_pass, apikey
+    try:
+        with open("config.yml", 'r') as config_yml:
+            try:
+                config_settings = yaml.load(config_yml)
+                # If config_settings isn't empty, then grab the drupal-username,
+                # drupal-password, and zap-apikey, if they exist.
+                if config_settings != None:
+
+                    # If login_name was already set, then don't read from config
+                    # as user likely wants to override it via arguments.
+                    if not login_name:
+                        if 'drupal-username' in config_settings:
+                            login_name = config_settings['drupal-username']
+
+                    if not login_pass:
+                        if 'drupal-password' in config_settings:
+                            login_pass = config_settings['drupal-password']
+
+                    if not apikey:
+                        if 'zap-apikey' in config_settings:
+                            apikey = config_settings['zap-apikey']
+
+            except yaml.YAMLError as exc:
+                pass
+
+            config_yml.close()
+    # Unable to open config file.
+    except IOError as exc:
+        print "Could not find config.yml...Prompting user..."
+
+
 def prompt_inputs():
     """Prompts user for input if any info is missing."""
     global target, apikey, login_name, login_pass, \
@@ -384,6 +418,7 @@ def export_results():
 
 def main():
     attempt_banner_display()
+    read_config()
     prompt_inputs()
     get_routing_paths()
     setup_zap()
