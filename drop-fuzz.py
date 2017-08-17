@@ -443,9 +443,14 @@ def active_scan_target():
         # then run the program again but with the -S flag.
 
         # Print out progress of Scan until it's at 100%.
-        while (int(zap.ascan.status(scanid)) < 100):
-            print 'Scan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
-            time.sleep(5)
+        try:
+            while (int(zap.ascan.status(scanid)) < 100):
+                print 'Scan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
+                time.sleep(5)
+        except ValueError as e:
+            print 'ZAP needs to spider the site before running an Active Scan.'
+            spider_target()
+            return active_scan_target() 
         print 'Scan completed for route ' + route + Fore.GREEN + '...OK'
         # Give scanner a chance to finish.
         time.sleep(2)
