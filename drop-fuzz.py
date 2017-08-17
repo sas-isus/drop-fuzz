@@ -65,11 +65,11 @@ login_name = options.login_name
 login_pass = options.login_pass
 module     = options.module
 
-# If user is hosting site on local machine, we can check for module via /var/www/
-is_local_host = False
-
 # Array containing routing paths for selected module.
 module_routes = []
+
+# Name of Scan Policy
+scan_policy = "Drop-Fuzz-Scan-Policy"
 
 # Initialize Colorama for coloring terminal text.
 init(autoreset=True)
@@ -351,9 +351,45 @@ def init_zap_user():
           zap.users.set_user_enabled(contextid, userid, True)
 
 
+def init_scan_policy():
+    """Tells ZAP what kind of Active Scan we want to perform (XSS, SQLi, etc)
+       and how rigourously we should test."""
+    # Useful info on scan policies https://github.com/zaproxy/zaproxy/issues/1693
+    # Create custom scan policy
+    zap.ascan.add_scan_policy (scan_policy)
+    # Disable all default scans
+    zap.ascan.disable_all_scanners(scan_policy)
+    # Enable some scanners
+    # SQLi Scanners
+    # The first parameter is a string of scanner IDs.
+    # Find a list of ids at https://github.com/zaproxy/zaproxy/wiki/ZAP-API-Scan
+    zap.ascan.enable_scanners("40018, 40019, 40020, 40021, 40022, 90018", scan_policy)
+    # XSS Scanners
+    zap.ascan.enable_scanners("40012, 40014, 40016, 40017", scan_policy)
+    # Error disclosure
+    zap.ascan.enable_scanners("90022", scan_policy)
+    # Configure the strengths of the individual scanners:
+    # set_scanner_attack_strength params:
+    # (id, attack_strength, policy_name)
+    # Change SQL Injection scanners to high
+    zap.ascan.set_scanner_attack_strength(40018, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40019, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40020, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40021, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40022, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(90018, "HIGH", scan_policy)
+    # Change XSS Scanners to high
+    zap.ascan.set_scanner_attack_strength(40012, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40014, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40016, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40017, "HIGH", scan_policy)
+    # Change Error Scanners to high
+    zap.ascan.set_scanner_attack_strength(90022, "HIGH", scan_policy)
+
+
 def exit_program(reason):
     """Terminates program and displays reason why."""
-    print reason + ' Aborting...'
+    print Fore.RED + reason + ' Aborting...'
     exit()
 
 
@@ -373,7 +409,8 @@ def spider_target():
                                          target + route,
                                          0,
                                          True,
-                                         True
+                                         True,
+                                         apikey=apikey
                                         )
         # Give the Spider a chance to start.
         time.sleep(2)
@@ -389,6 +426,7 @@ def spider_target():
 
 def active_scan_target():
     """Performs Active Scan on Target in ZAP."""
+    init_scan_policy()
     # Alert user.
     print '\nStarting Active Scanner...\n'
     # Scan each route.
@@ -397,7 +435,13 @@ def active_scan_target():
         print 'Scanning target %s' % target + route
         # Start scanning in ZAP.
         # Params. (url, contextId, userId, recurse, scanPolicyName, method, postData)
-        scanid = zap.ascan.scan_as_user(target + route, contextid, userid, True)
+        scanid = zap.ascan.scan_as_user(target + route, contextid, userid, True, scan_policy, apikey=apikey)
+
+        # This function has a habit of breaking the program.
+        # I think the issue is caused by a lack of Spidering prior to scanning.
+        # It may be beneficial to wrap this in a try-except, and if it fails,
+        # then run the program again but with the -S flag.
+
         # Print out progress of Scan until it's at 100%.
         while (int(zap.ascan.status(scanid)) < 100):
             print 'Scan progress %: ' + Fore.GREEN + zap.ascan.status(scanid)
