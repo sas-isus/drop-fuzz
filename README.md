@@ -82,9 +82,12 @@ $ pip install -r requirements.txt
     - This also means you'll be able to select what else to scan for (not just fuzzing).
 - [x] Configuration file.
     - No more having to type all the same arguments every single time you run this.
-- [x] Exported results file and auto-closing of ZAP.
-    - Why leave ZAP open for hours once it's done scanning?
-    - Upon completion, save a full-blown report and close ZAP (maybe save the session, too, just in case).
+- [x] Exported results file.
+    - Upon completion, save a full-blown report.
 - [x] Automatically find the module's source code so you don't have to type in a local path every time.
     - You're already pointing _drop-fuzz_ to your site, which should have the module on it,
     so why not just grab the source code from the site?
+- [ ] Scan an entire site.
+    - Already have an existing site with plenty of modules enabled? Wouldn't it
+    take forever to run Drop-Fuzz on _every single **one**_? Let's add a feature
+    that lets the user specify nothing but a site to scan.
