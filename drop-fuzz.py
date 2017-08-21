@@ -52,8 +52,8 @@ parser.add_option("-u", "--username", "--user", dest="login_name", \
                   help="Drupal login username", metavar='<USERNAME>')
 parser.add_option("-p", "--password", "--pass", dest="login_pass", \
                   help="Drupal login password", metavar='<PASSWORD>')
-parser.add_option("-S", "--spider", action="store_true", dest="spider", \
-                  help="Run a spider on the module's routes")
+parser.add_option("-n", "--no-spider", action="store_true", dest="nospider", \
+                  help="Do not run a spider on the module's routes")
 parser.add_option("-f", "--force", action="store_true", dest="force", \
                   help="Force default values for prompts")
 (options, args) = parser.parse_args()
@@ -497,7 +497,7 @@ def main():
     prompt_inputs()
     get_routing_paths()
     setup_zap()
-    if options.spider:
+    if not options.nospider:
         spider_target()
     active_scan_target()
     export_results()
