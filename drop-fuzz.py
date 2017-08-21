@@ -360,29 +360,46 @@ def init_scan_policy():
     # Disable all default scans
     zap.ascan.disable_all_scanners(scan_policy)
     # Enable some scanners
-    # SQLi Scanners
     # The first parameter is a string of scanner IDs.
     # Find a list of ids at https://github.com/zaproxy/zaproxy/wiki/ZAP-API-Scan
-    zap.ascan.enable_scanners("40018, 40019, 40020, 40021, 40022, 90018", scan_policy)
+
+    # SQLi Scanners
+    zap.ascan.enable_scanners("40018, 40019, 90018", scan_policy)
     # XSS Scanners
     zap.ascan.enable_scanners("40012, 40014, 40016, 40017", scan_policy)
+    # Session Fixation
+    zap.ascan.enable_scanners("40013", scan_policy)
+    # XPath Injection
+    zap.ascan.enable_scanners("90021", scan_policy)
+    # Server Side Include (SSI)
+    zap.ascan.enable_scanners("40009", scan_policy)
+    # Anti CSRF Tokens
+    zap.ascan.enable_scanners("20012", scan_policy)
     # Error disclosure
     zap.ascan.enable_scanners("90022", scan_policy)
     # Configure the strengths of the individual scanners:
     # set_scanner_attack_strength params:
     # (id, attack_strength, policy_name)
     # Change SQL Injection scanners to high
-    zap.ascan.set_scanner_attack_strength(40018, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40019, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40020, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40021, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40022, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(90018, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40018, "HIGH", scan_policy)  # General
+    zap.ascan.set_scanner_attack_strength(40019, "HIGH", scan_policy)  # MySQL
+    #zap.ascan.set_scanner_attack_strength(40020, "HIGH", scan_policy) # Hypersonic
+    #zap.ascan.set_scanner_attack_strength(40021, "HIGH", scan_policy) # Oracle
+    #zap.ascan.set_scanner_attack_strength(40022, "HIGH", scan_policy) # Postgres
+    zap.ascan.set_scanner_attack_strength(90018, "HIGH", scan_policy)  # Advanced
     # Change XSS Scanners to high
-    zap.ascan.set_scanner_attack_strength(40012, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40014, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40016, "HIGH", scan_policy)
-    zap.ascan.set_scanner_attack_strength(40017, "HIGH", scan_policy)
+    zap.ascan.set_scanner_attack_strength(40012, "HIGH", scan_policy)  # Reflect
+    zap.ascan.set_scanner_attack_strength(40014, "HIGH", scan_policy)  # Persist
+    zap.ascan.set_scanner_attack_strength(40016, "HIGH", scan_policy)  # Persist
+    zap.ascan.set_scanner_attack_strength(40017, "HIGH", scan_policy)  # Persist
+    # Change Session Fixation to high
+    zap.ascan.set_scanner_attack_strength(40013, "HIGH", scan_policy)
+    # Change XPath Injection to high
+    zap.ascan.set_scanner_attack_strength(90021, "HIGH", scan_policy)
+    # Change SSI to high
+    zap.ascan.set_scanner_attack_strength(40009, "HIGH", scan_policy)
+    # Change Anti CSRF to high
+    zap.ascan.set_scanner_attack_strength(20012, "HIGH", scan_policy)
     # Change Error Scanners to high
     zap.ascan.set_scanner_attack_strength(90022, "HIGH", scan_policy)
 
