@@ -39,7 +39,7 @@ By default, _drop-fuzz_ will prompt the user for any information it needs.
 
 Though, you can always specify this information to _drop-fuzz_ via arguments.
 
-    $ python drop-fuzz.py -S -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
+    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
 
     $ python drop-fuzz.py -f
 
