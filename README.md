@@ -23,7 +23,7 @@ Before running this program, make sure ZAP is open.
 
     -p PASSWORD, --password PASSWORD, --pass PASSWORD            Drupal login password.
 
-    -S, --spider                                                 Run a spider on the module's routes.
+    -n, --no-spider                                              Do not run a spider on the module's routes.
 
     -f, --force                                                  Force default values for prompts.
 
