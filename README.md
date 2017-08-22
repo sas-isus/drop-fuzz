@@ -28,7 +28,7 @@ Before running this program, make sure ZAP is open.
     -f, --force                                                  Force default values for prompts.
 
 Arguments are not required, as _drop-fuzz_ will prompt the user for any missing
-info, aside from -S (Spidering) and -f (forcing the default values).
+info, aside from -n (No Spidering) and -f (forcing the default values).
 
 
 ## Examples
