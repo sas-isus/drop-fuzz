@@ -264,11 +264,16 @@ def get_routing_paths():
     routing_file = ''
     # Check every file in the specified directory.
     # See if a routing file exists.
-    for f in os.listdir(module):
-        if f.endswith(".routing.yml"):
-            print "Routing file found at " + os.path.join(module, f) + \
-                  Fore.GREEN + "...OK"
-            routing_file = f
+    try:
+        for f in os.listdir(module):
+            if f.endswith(".routing.yml"):
+                print "Routing file found at " + os.path.join(module, f) + \
+                      Fore.GREEN + "...OK"
+                routing_file = f
+    except TypeError as er:
+        exit_program("[!] Site does not appear to be a Drupal 8 site, or " + \
+                     "has no modules installed.\n")
+
     # If a routing file is found, then add all the routes to our list.
     if routing_file:
         with open(os.path.join(module, routing_file), 'r') as r_file:
@@ -296,7 +301,7 @@ def get_routing_paths():
     # Odds are, there's nothing that can be abused because of this.
     # Still, do a manual pen-test to make sure.
     else:
-        exit_program("[!] Module does not have a routing file.")
+        exit_program("[!] Module does not have a routing file.\n")
     print 'Found the following routes: ' + str(module_routes) + Fore.GREEN + '...OK'
 
 
