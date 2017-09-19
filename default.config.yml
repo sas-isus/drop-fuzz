@@ -1,11 +1,10 @@
-# drop-fuzz -- config.yml
-# =========================
-# To use, uncomment the below line(s) you find necessary, and replace
-# the given values with your own.
-#--------------------------------------------------------------------
+# Before running drop-fuzz copy this file to config.yml and modify settings.
+# $ cp default.config.yml config.yml
 
+# Drupal localhost URL
 drupal-url: 'http://127.0.0.1/drupal'
-system-path: '/var/www/html/drupal'
+# Path to contrib modules
+system-path: '/var/www/html/drupal/modules/contrib'
 #drupal-username: brian
 #drupal-password: paranoid4ndr0id
 #zap-apikey: abcdefghijk1234567
