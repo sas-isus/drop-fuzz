@@ -1,2 +1,3 @@
 venv-drop-fuzz/
 config.yml
+.idea/*
