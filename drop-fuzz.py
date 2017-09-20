@@ -35,6 +35,8 @@ import yaml
 import readline
 # Used for colored output.
 from colorama import Fore, Style, init
+# Used for prompting user password.
+import getpass
 
 
 """ GLOBALS """
@@ -202,6 +204,9 @@ def prompt_inputs():
             ans = raw_input("Use http://127.0.0.1/drupal as target?" + Fore.YELLOW + " [Y|N]: ")
             if ans.lower() == 'n' or ans.lower() == 'no':
                 target = raw_input("Enter a URL to target: ")
+                # Remove trailing backslash, if one exists.
+                if target[-1:] == '/':
+                    target = target[:-1]
             else:
                 target = 'http://127.0.0.1/drupal'
         else:
@@ -221,12 +226,14 @@ def prompt_inputs():
     # Ensure login_pass has been set properly.
     if not login_pass:
         if not options.force:
-            login_pass = raw_input("Enter your Drupal password: ")
+            login_pass = getpass.getpass("Enter your Drupal password: ")
         else:
             login_pass = 'admin'
     # Ensure module has been set properly.
     if not module:
         if target.startswith("http://127.0.0.1"):
+            # I believe Composer creates the /contrib/ dir, but a manual install
+            # from the Drupal site does not.
             local_contrib_dir = "/var/www/html/" + target.replace("http://127.0.0.1/", "") + "/modules/contrib/"
             if os.path.isdir(local_contrib_dir):
                 print 'Possible Modules:'
@@ -238,6 +245,22 @@ def prompt_inputs():
                     print Fore.RED + 'Invalid module. Try again.\n'
                     return prompt_inputs()
                 module = local_contrib_dir + sel_module
+            # Check if dir /modules/ exists, but not /contrib/.
+            elif os.path.isdir(local_contrib_dir[:-8]):
+                local_contrib_dir = local_contrib_dir[:-8]
+                print 'Possible Modules:'
+                for m in os.listdir(local_contrib_dir):
+                    print Fore.YELLOW + m
+                print ''
+                sel_module = raw_input("Select a module: ")
+                if sel_module not in os.listdir(local_contrib_dir):
+                    print Fore.RED + 'Invalid module. Try again.\n'
+                    return prompt_inputs()
+                module = local_contrib_dir + sel_module
+            else:
+                readline.set_completer_delims(' \t\n')
+                readline.parse_and_bind("tab: complete")
+                module = raw_input("Enter module path (ex /home/brj424/metatag): ")
         else:
             readline.set_completer_delims(' \t\n')
             readline.parse_and_bind("tab: complete")
@@ -337,8 +360,8 @@ def init_zap_authentication():
     # Set the logged in indicator so ZAP knows if user is logged in or not.
     print 'Setting logged in indicator' + Fore.GREEN + '...' + \
           zap.authentication.set_logged_in_indicator(
-              contextid, '\Q<a href="/drupal/user/logout" ' + \
-              'data-drupal-link-system-path="user/logout">Log out</a>\E'
+              contextid, '\Q<a href="/' + target.replace("http://127.0.0.1/", "") + \
+              '/user/logout" data-drupal-link-system-path="user/logout">Log out</a>\E'
           )
 
 
