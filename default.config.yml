@@ -3,8 +3,11 @@
 
 # Drupal localhost URL
 target_url: 'http://127.0.0.1/drupal'
+
 # Path to contrib modules
 module_path: '/var/www/html/drupal/modules/contrib'
-#drupal_username: brian
-#drupal_password: paranoid4ndr0id
-#zap_apikey: abcdefghijk1234567
+
+# Optional 
+drupal_username: 
+drupal_password:
+zap_apikey: 
