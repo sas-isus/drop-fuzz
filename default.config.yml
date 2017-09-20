@@ -2,9 +2,9 @@
 # $ cp default.config.yml config.yml
 
 # Drupal localhost URL
-drupal-url: 'http://127.0.0.1/drupal'
+target_url: 'http://127.0.0.1/drupal'
 # Path to contrib modules
-system-path: '/var/www/html/drupal/modules/contrib'
-#drupal-username: brian
-#drupal-password: paranoid4ndr0id
-#zap-apikey: abcdefghijk1234567
+module_path: '/var/www/html/drupal/modules/contrib'
+#drupal_username: brian
+#drupal_password: paranoid4ndr0id
+#zap_apikey: abcdefghijk1234567

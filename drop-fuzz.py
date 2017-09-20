@@ -18,7 +18,6 @@ __status__    = "Development"
 
 """ IMPORTS """
 
-
 # Used for getting args.
 from optparse import OptionParser
 # Used for letting the script rest while ZAP functions are loaded.
@@ -79,6 +78,7 @@ current_date = time.strftime("%y%m%d")
 current_time = time.strftime("%H%M%S")
 
 # Vars used in initializing and undergoing a ZAP session.
+# TODO: I didn't realize the conext name was based on date/time, tweak
 context        = 'Context-%s-%s' % (current_date, current_time)
 contextid      = ''
 userid         = ''
@@ -94,7 +94,7 @@ zap = ''
 # Should we ask the user for the port? Or just assume 8080? Maybe add an arg for it.
 
 
-""" FUNCTIONS """
+#### FUNCTIONS ####
 
 
 def display_large_banner():
@@ -156,19 +156,20 @@ def attempt_banner_display():
         display_large_banner()
     elif int(columns) > 75:
         display_small_banner()
+    # what happens if columns <= 75?
 
-
+# Making this required
 def read_config():
-    """Tries to read from config.yml"""
-    global login_name, login_pass, apikey
+    # Tries to read from config.yml
+    global target_url, module_path, login_name, login_pass, apikey
     try:
         with open("config.yml", 'r') as config_yml:
             try:
                 config_settings = yaml.load(config_yml)
                 # If config_settings isn't empty, then grab the drupal-username,
                 # drupal-password, and zap-apikey, if they exist.
+                ''' REFACTORING
                 if config_settings != None:
-
                     # If login_name was already set, then don't read from config
                     # as user likely wants to override it via arguments.
                     if not login_name:
@@ -182,7 +183,13 @@ def read_config():
                     if not apikey:
                         if 'zap-apikey' in config_settings:
                             apikey = config_settings['zap-apikey']
-
+                '''
+                target_url = config_settings['target_url']
+                module_path = config_settings['module_path']
+                login_name = config_settings['drupal-username']
+                login_pass = config_settings['drupal-password']
+                if not apikey:
+                    apikey = config_settings['zap-apikey']
             except yaml.YAMLError as exc:
                 pass
 
@@ -207,6 +214,7 @@ def prompt_inputs():
         else:
             target = 'http://127.0.0.1/drupal'
     # Ensure target has protocol. (Otherwise, ZAP gets confused.)
+    # TODO: only do this when getting user input
     if not target.startswith("http://") and not target.startswith("https://"):
         target = "http://" + target
     # Ensure apikey has been set properly.
