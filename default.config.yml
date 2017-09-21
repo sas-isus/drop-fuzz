@@ -7,7 +7,9 @@ target_url: 'http://127.0.0.1/drupal'
 # Path to contrib modules
 module_path: '/var/www/html/drupal/modules/contrib'
 
-# Optional 
+# Login credentials
 drupal_username: 
 drupal_password:
-zap_apikey: 
+
+# Located in ZAP => Tools => Options => API
+zap_apikey:
