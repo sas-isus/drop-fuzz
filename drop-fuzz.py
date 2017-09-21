@@ -72,6 +72,7 @@ drupal_username = ''
 drupal_password = ''
 zap_apikey = ''
 module_path = None
+module_name = None
 
 # Array containing routing paths for selected module.
 module_routes = []
@@ -262,7 +263,7 @@ def prompt_inputs():
 
 
 def get_module():
-    global module_path, modules_dir
+    global module_path, modules_dir,  module_name
     if os.path.isdir(modules_dir):
         print 'Available modules:'
         for m in os.listdir(modules_dir):
@@ -362,7 +363,7 @@ def init_zap_authentication():
 def init_zap_user():
     # Add custom credentials to ZAP User and enable it.
     # Adds custom username and password to ZAP User in our Context.
-    print 'Setting authentication credentials ' + Fore.GREEN + '...' + \
+    print 'Setting authentication credentials' + Fore.GREEN + '...' + \
           zap.users.set_authentication_credentials(
               contextid,
               userid,
@@ -500,7 +501,7 @@ def active_scan_target():
 def export_results():
     # Report the results
     # Todo: Complete this function.
-    module_name = module.rsplit('/', 1)[1]
+    #module_name = module.rsplit('/', 1)[1]
     file_name = '%s-%s-%s' % (module_name, current_date, current_time)
     f = open(file_name + ".html", "w")
     f.write(zap.core.htmlreport())
@@ -514,7 +515,6 @@ def export_results():
 
 
 def main():
-    global zap
     attempt_banner_display()
     read_config()
     #prompt_inputs()
@@ -526,6 +526,7 @@ def main():
     # queries containing queries. The outer set uses &, =, etc, while the inner
     # set uses the respective encodings of those special characters. This is how
     # ZAP is able to distinguish the inner from the outer.
+    global authmethodconfigparams, zap
     authmethodconfigparams = 'loginUrl=' + target_url + '/user/login/' + \
                              '&loginRequestData=name%3D{%25username%25}' + \
                              '%26pass%3D{%25password%25}' + \
