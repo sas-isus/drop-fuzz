@@ -1,0 +1,15 @@
+# Before running drop-fuzz copy this file to config.yml and modify settings.
+# $ cp default.config.yml config.yml
+
+# Drupal localhost URL
+target_url: 'http://127.0.0.1/drupal'
+
+# Path to contrib modules
+modules_dir: '/var/www/html/drupal/modules/contrib'
+
+# Login credentials
+drupal_username: 
+drupal_password:
+
+# Located in ZAP => Tools => Options => API
+zap_apikey:
