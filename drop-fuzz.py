@@ -67,10 +67,11 @@ module     = options.module
 
 # Initialize vars
 target_url = ''
-module_path = ''
+modules_dir = ''
 drupal_username = ''
 drupal_password = ''
 zap_apikey = ''
+module_path = None
 
 # Array containing routing paths for selected module.
 module_routes = []
@@ -169,7 +170,7 @@ def attempt_banner_display():
 # Making this required
 def read_config():
     # Tries to read from config.yml
-    global target_url, module_path, drupal_username, drupal_password, apikey
+    global target_url, modules_dir, drupal_username, drupal_password, zap_apikey
     try:
         with open("config.yml", 'r') as config_yml:
             try:
@@ -193,7 +194,7 @@ def read_config():
                             apikey = config_settings['zap-apikey']
                 '''
                 target_url = config_settings['target_url']
-                module_path = config_settings['module_path']
+                modules_dir = config_settings['modules_dir']
                 drupal_username = config_settings['drupal_username']
                 drupal_password = config_settings['drupal_password']
                 if not zap_apikey:
@@ -208,7 +209,7 @@ def read_config():
 
 
 def prompt_inputs():
-    """Prompts user for input if any info is missing."""
+    # Prompts user for input if any info is missing.
     global target_url, zap_apikey, drupal_username, drupal_password, \
            module_path, authmethodconfigparams, zap
     # Ensure target has been set properly.
@@ -260,9 +261,23 @@ def prompt_inputs():
             module_path = raw_input("Enter module path (ex /home/brj424/metatag): ")
 
 
+def get_module():
+    global module_path, modules_dir
+    if os.path.isdir(modules_dir):
+        print 'Available modules:'
+        for m in os.listdir(modules_dir):
+            print Fore.YELLOW + m
+        print ''
+        module_name = raw_input("Select a module: ")
+        if module_name not in os.listdir(modules_dir):
+            print Fore.RED + 'Invalid module, does not exist. Try again.\n'
+            return get_module()
+        module_path = modules_dir + '/' + module_name
+
+
 def get_routing_paths():
-    """Reads module's routing.yml file to find paths worth analyzing."""
-    global module_routes
+    # Reads module's routing.yml file to find paths worth analyzing.
+    global module_routes, module_path
     routing_file = ''
     # Check every file in the specified directory.
     # See if a routing file exists.
@@ -308,7 +323,7 @@ def get_routing_paths():
 
 
 def setup_zap():
-    """Create a Context with our target and user info in ZAP."""
+    # Create a Context with our target and user info in ZAP.
     global contextid, userid
     # Create a Context in ZAP to store our work in.
     contextid = zap.context.new_context(context)
@@ -323,14 +338,14 @@ def setup_zap():
 
 
 def init_zap_context():
-    """Create new Context in ZAP."""
+    # Create new Context in ZAP.
     # Add Target site to our Context.
     print 'Including target in context' + Fore.GREEN + '...' + \
-          zap.context.include_in_context(context, target + '.*')
+          zap.context.include_in_context(context, target_url + '.*')
 
 
 def init_zap_authentication():
-    """Add Authentication method info to our Context."""
+    # Add Authentication method info to our Context.
     # Set auth method in Context with associated POST data.
     print 'Setting authentication method' + Fore.GREEN + '...' + \
           zap.authentication.set_authentication_method(
@@ -345,9 +360,9 @@ def init_zap_authentication():
 
 
 def init_zap_user():
-    """Add custom credentials to ZAP User and enable it."""
+    # Add custom credentials to ZAP User and enable it.
     # Adds custom username and password to ZAP User in our Context.
-    print 'Setting authentication credentials' + Fore.GREEN + '...' + \
+    print 'Setting authentication credentials ' + Fore.GREEN + '...' + \
           zap.users.set_authentication_credentials(
               contextid,
               userid,
@@ -412,19 +427,19 @@ def init_scan_policy():
 
 
 def exit_program(reason):
-    """Terminates program and displays reason why."""
+    # Terminates program and displays reason why.
     print Fore.RED + reason + ' Aborting...'
     exit()
 
 
 def spider_target():
-    """Spiders Target as User in ZAP."""
+    # Spiders Target as User in ZAP.
     # Alert user.
     print '\nStarting Spider...\n'
     # Spider each route.
     for route in module_routes:
         # Alert user.
-        print '\nSpidering target %s' % target + route
+        print '\nSpidering target %s' % target_url + route
         # Start scanning in ZAP.
         # Params. (contextId, userId, url, maxChildren, recurse, subtreeOnly)
         scanid = zap.spider.scan_as_user(
@@ -449,7 +464,7 @@ def spider_target():
 
 
 def active_scan_target():
-    """Performs Active Scan on Target in ZAP."""
+    # Performs Active Scan on Target in ZAP.
     init_scan_policy()
     # Alert user.
     print '\nStarting Active Scanner...\n'
@@ -499,9 +514,11 @@ def export_results():
 
 
 def main():
+    global zap
     attempt_banner_display()
     read_config()
     #prompt_inputs()
+    get_module()
 
     # Pulling this chunk out of prompt_inputs(), may need more permanent solution
     # Set authmethodconfigparams using new data.
@@ -509,7 +526,7 @@ def main():
     # queries containing queries. The outer set uses &, =, etc, while the inner
     # set uses the respective encodings of those special characters. This is how
     # ZAP is able to distinguish the inner from the outer.
-    authmethodconfigparams = 'loginUrl=' + target + '/user/login/' + \
+    authmethodconfigparams = 'loginUrl=' + target_url + '/user/login/' + \
                              '&loginRequestData=name%3D{%25username%25}' + \
                              '%26pass%3D{%25password%25}' + \
                              '%26form_id%3Duser_login_form%26op%3DLog%2Bin'
@@ -521,8 +538,8 @@ def main():
 
     get_routing_paths()
     setup_zap()
-    if not options.nospider:
-        spider_target()
+    #if not options.nospider:
+    #spider_target()
     active_scan_target()
     export_results()
     print Fore.GREEN + Style.BRIGHT + 'Done.'
