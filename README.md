@@ -7,9 +7,10 @@ An automated fuzzer designed for use with Drupal sites.
 
 Before running this program, make sure ZAP is open.
 
-    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a APIKEY -u brian -p password123
+    $ python drop-fuzz.py
+        
 
-**Arguments:**
+**Arguments:** (not currently implemented)
 
     -h, --help                                                   Show a help message and exit.
 
