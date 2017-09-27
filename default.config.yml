@@ -8,8 +8,12 @@ target_url: 'http://127.0.0.1/drupal'
 modules_dir: '/var/www/html/drupal/modules/contrib'
 
 # Login credentials
-drupal_username: 
+drupal_username:
 drupal_password:
 
 # Located in ZAP => Tools => Options => API
 zap_apikey:
+
+# Type of scan to perform. Types:
+#   default, xss, sqli, sessions, xpath, ssi, csrf, errors
+scan_type: default
