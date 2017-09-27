@@ -4,10 +4,10 @@
 drop-fuzz.py: Generates a report containing the results of running a fuzzer
               on a specified Drupal module.
 Usage:
-    $ python drop-fuzz.py -t 127.0.0.1/drupal/ -a apikey -u brian -p password123
+    $ python drop-fuzz.py
 """
 
-__author__    = "Brian Jopling"
+__author__    = ["Brian Jopling", "Clay Wells"]
 __copyright__ = "Copyright 2017, University of Pennsylvania School of " \
                 "Arts and Sciences."
 __credits__   = ["Brian Jopling", "Clay Wells"]
@@ -73,6 +73,7 @@ modules_dir = ''
 drupal_username = ''
 drupal_password = ''
 zap_apikey = ''
+scan_type = ''
 module_path = None
 module_name = None
 
@@ -86,12 +87,11 @@ scan_policy = "Drop-Fuzz-Scan-Policy"
 init(autoreset=True)
 
 # Get current time and date for unique naming.
-current_date = time.strftime("%y%m%d")
+current_date = time.strftime("%Y%m%d")
 current_time = time.strftime("%H%M%S")
 
 # Vars used in initializing and undergoing a ZAP session.
-# TODO: I didn't realize the conext name was based on date/time, tweak
-context        = 'Context-%s-%s' % (current_date, current_time)
+context        = 'Context-Date:%s-Time:%s' % (current_date, current_time)
 contextid      = ''
 userid         = ''
 authmethodname = 'formBasedAuthentication'
@@ -168,47 +168,31 @@ def attempt_banner_display():
         display_large_banner()
     elif int(columns) > 75:
         display_small_banner()
-    # what happens if columns <= 75?
+
 
 # Making this required
 def read_config():
     # Tries to read from config.yml
-    global target_url, modules_dir, drupal_username, drupal_password, zap_apikey
+    global target_url, modules_dir, drupal_username, drupal_password, \
+           zap_apikey, scan_type
     try:
         with open("config.yml", 'r') as config_yml:
             try:
                 config_settings = yaml.load(config_yml)
-                # If config_settings isn't empty, then grab the drupal-username,
-                # drupal-password, and zap-apikey, if they exist.
-                ''' REFACTORING
-                if config_settings != None:
-                    # If login_name was already set, then don't read from config
-                    # as user likely wants to override it via arguments.
-                    if not login_name:
-                        if 'drupal-username' in config_settings:
-                            login_name = config_settings['drupal-username']
-
-                    if not login_pass:
-                        if 'drupal-password' in config_settings:
-                            login_pass = config_settings['drupal-password']
-
-                    if not apikey:
-                        if 'zap-apikey' in config_settings:
-                            apikey = config_settings['zap-apikey']
-                '''
                 target_url = config_settings['target_url']
                 modules_dir = config_settings['modules_dir']
                 drupal_username = config_settings['drupal_username']
                 drupal_password = config_settings['drupal_password']
-                if not zap_apikey:
-                    zap_apikey = config_settings['zap_apikey']
+                zap_apikey = config_settings['zap_apikey']
+                scan_type = config_settings['scan_type']
             except yaml.YAMLError as exc:
-                pass
+                exit_program("[!] File 'config.yml' contains missing " \
+                             " / incorrect info!")
 
             config_yml.close()
     # Unable to open config file.
     except IOError as exc:
-        print "Could not find config.yml...Prompting user..."
+        exit_program("[!] File 'config.yml' not found!")
 
 
 def prompt_inputs():
@@ -357,7 +341,7 @@ def init_zap_authentication():
     # Set the logged in indicator so ZAP knows if user is logged in or not.
     print 'Setting logged in indicator' + Fore.GREEN + '...' + \
           zap.authentication.set_logged_in_indicator(
-              contextid, '\Q<a href="/' + target.replace("http://127.0.0.1/", "") + \
+              contextid, '\Q<a href="/' + target_url.replace("http://127.0.0.1/", "") + \
               '/user/logout" data-drupal-link-system-path="user/logout">Log out</a>\E'
           )
 
@@ -389,19 +373,26 @@ def init_scan_policy():
     # Find a list of ids at https://github.com/zaproxy/zaproxy/wiki/ZAP-API-Scan
 
     # SQLi Scanners
-    zap.ascan.enable_scanners("40018, 40019, 90018", scan_policy)
+    if 'default' in scan_type or 'sqli' in scan_type:
+        zap.ascan.enable_scanners("40018, 40019, 90018", scan_policy)
     # XSS Scanners
-    zap.ascan.enable_scanners("40012, 40014, 40016, 40017", scan_policy)
+    if 'default' in scan_type or 'xss' in scan_type:
+        zap.ascan.enable_scanners("40012, 40014, 40016, 40017", scan_policy)
     # Session Fixation
-    zap.ascan.enable_scanners("40013", scan_policy)
+    if 'default' in scan_type or 'sessions' in scan_type:
+        zap.ascan.enable_scanners("40013", scan_policy)
     # XPath Injection
-    zap.ascan.enable_scanners("90021", scan_policy)
+    if 'default' in scan_type or 'xpath' in scan_type:
+        zap.ascan.enable_scanners("90021", scan_policy)
     # Server Side Include (SSI)
-    zap.ascan.enable_scanners("40009", scan_policy)
+    if 'default' in scan_type or 'ssi' in scan_type:
+        zap.ascan.enable_scanners("40009", scan_policy)
     # Anti CSRF Tokens
-    zap.ascan.enable_scanners("20012", scan_policy)
+    if 'default' in scan_type or 'csrf' in scan_type:
+        zap.ascan.enable_scanners("20012", scan_policy)
     # Error disclosure
-    zap.ascan.enable_scanners("90022", scan_policy)
+    if 'default' in scan_type or 'errors' in scan_type:
+        zap.ascan.enable_scanners("90022", scan_policy)
     # Configure the strengths of the individual scanners:
     # set_scanner_attack_strength params:
     # (id, attack_strength, policy_name)
