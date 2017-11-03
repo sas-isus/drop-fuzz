@@ -3,12 +3,24 @@
 An automated fuzzer designed for use with Drupal sites.
 
 
+## Installing Dependencies
+
+Run the following command:
+```
+$ pip install -r requirements.txt
+```
+
+
 ## Usage
 
 Before running this program, make sure ZAP is open.
 
+Then run:
+
     $ python drop-fuzz.py
         
+Note: This script was written in Python 2.7 and has not been tested with Python 3.
+
 
 ## Using `config.yml`
 
@@ -28,14 +40,6 @@ and copying the key on the right.
 1. [OWASP ZAP](https://www.owasp.org/index.php/OWASP_Zed_Attack_Proxy_Project)
 2. [Python 2.7](https://www.python.org/downloads/)
 3. All the Pip packages in `requirements.txt`
-
-
-#### Installing from `requirements.txt`
-
-Run the following command:
-```
-$ pip install -r requirements.txt
-```
 
 
 ## Features Coming Soon
