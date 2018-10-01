@@ -76,6 +76,7 @@ zap_apikey = ''
 scan_type = ''
 module_path = None
 module_name = None
+logfile = 'dropfuzz.log'
 
 # Array containing routing paths for selected module.
 module_routes = []
@@ -262,7 +263,7 @@ def get_module():
         module_path = modules_dir + '/' + module_name
 
 
-def get_routing_paths():
+def get_routing_paths(flog):
     # Reads module's routing.yml file to find paths worth analyzing.
     global module_routes, module_path
     routing_file = ''
@@ -296,6 +297,7 @@ def get_routing_paths():
                         # find via spidering the "main" path... but I have yet
                         # to see any of these.
                         if '{' not in reading_routes[l]['path']:
+                            flog.write('[+] adding route: ' + reading_routes[l]['path'] + '\n')
                             module_routes.append(reading_routes[l]['path'])
                     except:
                         pass
@@ -457,7 +459,7 @@ def spider_target():
     print Fore.GREEN + Style.BRIGHT + 'Spider completed for all routes...OK'
 
 
-def active_scan_target():
+def active_scan_target(flog):
     # Performs Active Scan on Target in ZAP.
     init_scan_policy()
     # Alert user.
@@ -466,6 +468,8 @@ def active_scan_target():
     for route in module_routes:
         # Alert user.
         print '\nScanning target %s' % target_url + route
+        flog.write('[+] Scanning target' + target_url + route + '\n')
+
         # Start scanning in ZAP.
         # Params. (url, contextId, userId, recurse, scanPolicyName, method, postData)
         scanid = zap.ascan.scan_as_user(target_url + route, contextid, userid, True, scan_policy, apikey=zap_apikey)
@@ -530,13 +534,17 @@ def main():
     except e:
         exit_program("Could not start ZAP. Is ZAP open? Is the API valid?")
 
-    get_routing_paths()
+    # Open logfile for writing
+    flog = open(logfile, 'w')
+
+    get_routing_paths(flog)
     setup_zap()
     #if not options.nospider:
     #spider_target()
-    active_scan_target()
+    active_scan_target(flog)
     export_results()
     print Fore.GREEN + Style.BRIGHT + 'Done.'
+    flog.close()
 
 
 #### MAIN ####
